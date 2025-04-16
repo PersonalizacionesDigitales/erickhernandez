@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>E_S_Diguital</title>
+    <style>
+        /* --- Estilos CSS (SIN cambios relevantes excepto eliminación de .producto-opciones y ajuste de altura en carrusel) --- */
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #fdf6f0;
+            color: #333;
+            padding-top: 70px; /* Ajustado para el header fijo */
+        }
+
+        header {
+            background-color: #ff6f61;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 998;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 { margin: 0; font-size: 1.8rem; }
+
+        .anuncio {
+            background-color: #fff0e6;
+            padding: 1rem;
+            text-align: center;
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #d9534f;
+            animation: glow 2.5s ease-in-out infinite;
+            margin-bottom: 0.5rem; /* Reducido margen inferior */
+            /* Elimina margin-top si el header es fijo */
+        }
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 4px rgba(217, 83, 79, 0.5); }
+            50% { text-shadow: 0 0 10px rgba(217, 83, 79, 0.9); }
+        }
+
+        .productos {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            justify-content: center;
+            padding: 1.5rem;
+             /* margin-top: 1rem; No es necesario si el padding-top del body ya compensa */
+        }
+
+        .producto {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            width: 280px;
+            max-width: 90%;
+            padding: 1rem;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Asegura que los botones queden abajo */
+        }
+        .producto:hover { transform: scale(1.03); }
+
+        /* Estilos para el Carrusel */
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            /* height: 180px; */ /* <<-- ALTURA ORIGINAL */
+            height: 345px;      /* <<-- NUEVA ALTURA para proporción ~2269x2791 en 280px de ancho */
+            overflow: hidden;
+            border-radius: 8px;
+            margin-bottom: 0.8rem;
+            background-color: #eee; /* Fondo mientras carga o si no hay imagen */
+        }
+        .carousel-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ajusta la imagen sin distorsión, recortando si es necesario */
+            display: none; /* Oculta todas por defecto */
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: opacity 0.5s ease-in-out;
+             opacity: 0; /* Empieza invisible para la transición */
+        }
+        .carousel-image.active {
+            display: block; /* Muestra la activa */
+            opacity: 1; /* Hace visible la activa */
+        }
+        .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.45);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            font-size: 1.5rem; /* Tamaño del icono */
+            font-weight: lighter;
+            cursor: pointer;
+            z-index: 10;
+            line-height: 35px; /* Centra el icono verticalmente */
+            text-align: center;
+            padding: 0; /* Quita padding extra */
+            opacity: 0; /* Oculto por defecto */
+            transition: background-color 0.2s ease, opacity 0.3s ease;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
+        /* Mostrar botones al hacer hover sobre el contenedor */
+        .carousel-container:hover .carousel-btn {
+            opacity: 1;
+        }
+        .carousel-btn.prev {
+            left: 10px;
+            padding-right: 2px; /* Ajuste fino para centrar < */
+        }
+        .carousel-btn.next {
+            right: 10px;
+            padding-left: 2px; /* Ajuste fino para centrar > */
+        }
+        .carousel-btn:hover {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+
+        .producto h3 {
+            font-size: 1.1rem;
+            margin: 0.5rem 0; /* Espaciado vertical */
+            color: #333;
+            min-height: 2.4em; /* Evita saltos de altura si el nombre cambia */
+             line-height: 1.2em;
+        }
+        .producto p {
+            margin: 0.3rem 0 0.8rem 0; /* Espaciado */
+            font-size: 1rem;
+            color: #555;
+            font-weight: bold; /* Hacer el precio más visible */
+        }
+
+        /* --- ESTILOS PARA SELECTOR ELIMINADOS --- */
+        /* Ya no se necesitan: .producto-opciones, .producto-opciones label, .producto-opciones select */
+
+        .producto .botones-producto {
+            margin-top: auto; /* Empuja los botones al final */
+            display: flex;
+            flex-direction: column; /* Un botón debajo del otro */
+            gap: 0.5rem; /* Espacio entre botones */
+        }
+
+        .producto button {
+            border: none;
+            color: white;
+            padding: 0.6rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            font-size: 0.9rem;
+            width: 100%; /* Ocupan todo el ancho */
+            box-sizing: border-box; /* Incluye padding en el ancho */
+        }
+        .producto button:active {
+            transform: scale(0.98); /* Efecto al pulsar */
+        }
+
+        .btn-agregar-carrito { background-color: #007bff; }
+        .btn-agregar-carrito:hover { background-color: #0056b3; }
+
+        .btn-whatsapp-directo {
+            background-color: #25d366; /* Color WhatsApp */
+             display: flex; /* Para alinear icono y texto */
+             align-items: center;
+             justify-content: center;
+             gap: 0.4rem;
+        }
+         .btn-whatsapp-directo:hover { background-color: #1ebe5b; }
+         /* Estilo para el icono SVG dentro del botón */
+         .btn-whatsapp-directo svg {
+             width: 16px;
+             height: 16px;
+             fill: currentColor; /* Hereda color del botón (blanco) */
+             /* margin-right: 5px; Ya no es necesario con gap */
+         }
+
+
+        /* --- Estilos del Carrito Lateral (Sin cambios) --- */
+         #abrir-carrito-btn {
+            position: fixed;
+            top: 12px; /* Ajusta según tu header */
+            right: 15px;
+            background-color: #ff6f61; /* Color base */
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            font-size: 1.4rem; /* Tamaño icono */
+            cursor: pointer;
+            z-index: 1001;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+             transition: background-color 0.3s ease;
+             -webkit-tap-highlight-color: transparent; /* Quita brillo azul en móviles */
+        }
+        #abrir-carrito-btn.activo {
+            background-color: #28a745; /* Verde cuando hay items */
+        }
+
+        #carrito-lateral {
+            position: fixed;
+            top: 0; right: -310px; /* Empieza oculto */ width: 300px; height: 100%;
+            background-color: #f9f9f9; border-left: 1px solid #ccc;
+            padding: 1rem;
+            padding-top: 50px; /* Espacio para botón cerrar */ box-shadow: -2px 0 8px rgba(0,0,0,0.15);
+            transition: right 0.3s ease-in-out; z-index: 1002;
+            overflow-y: auto;
+            display: flex; flex-direction: column; box-sizing: border-box;
+        }
+        #carrito-lateral.visible { right: 0; } /* Muestra el carrito */
+        #carrito-lateral h2 { margin-top: 0; color: #333;
+            border-bottom: 1px solid #ddd; padding-bottom: 0.5rem; font-size: 1.2rem; }
+
+        #cerrar-carrito-btn {
+            position: absolute;
+            top: 8px; right: 8px; background: none; border: none;
+            font-size: 1.8rem; /* Más grande para tocar fácil */ padding: 5px;
+            line-height: 1; cursor: pointer; color: #888;
+            z-index: 1003;
+             -webkit-tap-highlight-color: transparent;
+        }
+         #cerrar-carrito-btn:hover, #cerrar-carrito-btn:active { color: #333; } /* Feedback visual */
+
+        #lista-carrito { list-style: none; padding: 0; flex-grow: 1; /* Ocupa espacio disponible */ margin-bottom: 1rem; }
+        #lista-carrito li { display: flex;
+            align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px dashed #eee; font-size: 0.9rem; gap: 0.8rem;
+        }
+        #lista-carrito li:last-child { border-bottom: none; } /* Sin borde en el último */
+        #lista-carrito li img { width: 50px;
+            height: 50px; object-fit: cover; border-radius: 4px; flex-shrink: 0; } /* Evita que la imagen se encoja */
+        #lista-carrito li .item-detalles { flex-grow: 1; /* Ocupa espacio */ display: flex; flex-direction: column; }
+        #lista-carrito li .item-nombre { font-weight: bold;
+            margin-bottom: 0.2rem; color: #444; }
+        #lista-carrito li .item-info { color: #666; }
+        /* #lista-carrito li .item-color { font-size: 0.85rem; color: #777; font-style: italic; } Ya no es necesario si el nombre de la variante lo incluye */
+        #lista-carrito li .btn-eliminar-item {
+            background: #dc3545;
+            color: white; border: none; border-radius: 50%;
+            width: 28px; height: 28px; font-size: 1rem; font-weight: bold; line-height: 28px;
+            text-align: center; padding: 0;
+            cursor: pointer; flex-shrink: 0; /* No se encoge */ transition: background-color 0.2s ease;
+        }
+        #lista-carrito li .btn-eliminar-item:hover { background-color: #c82333; }
+        #lista-carrito li.empty-cart { text-align: center; color: #888; margin-top: 2rem; border-bottom: none;
+            display: block; }
+
+        .carrito-total { font-weight: bold; margin-top: auto; /* Empuja al final */ padding-top: 1rem; border-top: 1px solid #ccc; text-align: right; font-size: 1.1rem; }
+
+        .btn-comprar-whatsapp {
+            background-color: #25d366;
+            color: white; padding: 0.8rem 1.2rem; border: none; border-radius: 5px;
+            cursor: pointer; margin-top: 1rem; width: 100%; text-align: center; font-size: 1rem;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+             -webkit-tap-highlight-color: transparent;
+        }
+        .btn-comprar-whatsapp:hover, .btn-comprar-whatsapp:active { background-color: #1ebe5b; } /* Feedback */
+
+        /* Estilos para Notificación (Sin cambios) */
+        #notificacion-carrito {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(40, 167, 69, 0.9); /* Verde éxito con transparencia */
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px; /* Bordes redondeados */
+            z-index: 1005;
+            font-size: 0.9rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, visibility 0s 0.5s linear;
+        }
+        #notificacion-carrito.visible {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>E_S Digital</h1>
+    </header>
+
+    <button id="abrir-carrito-btn" aria-label="Abrir carrito">🛒</button>
+
+    <main>
+        <div class="anuncio">CONSERVA SIEMPRE TUS INSTANTES Y RETRATOS INOLVIDABLES</div>
+        <div class="anuncio">PERSONALIZAMOS TODO TIPO DE FOTOGRAFIAS</div>
+
+
+        <div class="productos" id="productos">
+            </div>
+    </main>
+
+    <div id="carrito-lateral">
+         <button id="cerrar-carrito-btn" aria-label="Cerrar carrito">&times;</button>
+        <h2>Carrito de compras</h2>
+        <ul id="lista-carrito">
+            </ul>
+        <div class="carrito-total">Total: Q<span id="total">0.00</span></div>
+        <button class="btn-comprar-whatsapp" onclick="comprarCarritoWhatsapp()">Comprar Carrito por WhatsApp</button>
+    </div>
+
+    <div id="notificacion-carrito">Producto añadido al carrito</div>
+
+
+    <script>
+        /* --- Script JavaScript (SIN CAMBIOS FUNCIONALES) --- */
+
+         // --- Datos de Productos (NUEVA ESTRUCTURA con variantes) ---
+        // !!! ADAPTA TODOS TUS PRODUCTOS A ESTA ESTRUCTURA !!!
+        const productos = [
+            // --- Productos Adaptados (1-5 como ejemplo) ---
+            
+            
+            { id: 100, nombreBase: "Cuadro de novios", // Nombre general
+              variantes: [
+                { nombre: "Cuadro Grande de Novios Recuerdos del Año Medidas 20x25 Blanco", precio: 100, imagen: "img/memo1.jpg" }, // Asume que cuadro1_1 es negro
+                 { nombre: "Cuadro Grande de Novios Recuerdos del Año Medidas 20x25 Negro", precio: 100, imagen: "img/memo2.jpg" }, // Asume que cuadro1_2 es blanco
+                { nombre: "Cuadro Grande de Novios Recuerdos del Año Medidas 20x25 Beige", precio: 110, imagen: "img/memo3.jpg" } ,
+                { nombre: "Cuadro Mediano de Novios Recuerdos del Año Medidas 13x18 Blanco", precio: 60, imagen: "img/memo4.jpg" }, // Asume que cuadro1_1 es negro
+                 { nombre: "Cuadro Mediano de Novios Recuerdos del Año Medidas 13x18 Negro", precio: 60, imagen: "img/memo5.jpg" }, // Asume que cuadro1_2 es blanco
+                { nombre: "Cuadro Mediano de Novios Recuerdos del Año Medidas 13x18 Beige", precio: 70, imagen: "img/memo3.jpg" } ,
+                { nombre: "Cuadro Pequeño de Novios Recuerdos del Año Medidas 10x15 Blanco", precio: 35, imagen: "img/memo6.jpg" }, // Asume que cuadro1_1 es negro
+                { nombre: "Cuadro Pequeño de Novios Recuerdos del Año Medidas 10x15 Negro", precio: 35, imagen: "img/memo7.jpg" }, // Asume que cuadro1_2 es blanco
+               ]
+            },
+
+            { id: 1, nombreBase: "Cuadro para bebe", // Nombre general
+              variantes: [
+                { nombre: "Cuadro Grande de bebe para Niña recien nacida Medidas 20x25 Blanco", precio: 100, imagen: "img/1.jpg" }, // Asume que cuadro1_1 es negro
+                 { nombre: "Cuadro Grande de bebe para Niña recien nacida Medidas 20x25 Negro", precio: 100, imagen: "img/2.jpg" }, // Asume que cuadro1_2 es blanco
+                { nombre: "Cuadro Grande de bebe para Niña recien nacida Medidas 20x25 Beige", precio: 110, imagen: "img/8.jpg" } ,
+                { nombre: "Cuadro Mediano de bebe para Niña recien nacida Medidas 13x18 Blanco", precio: 60, imagen: "img/3.jpg" }, // Asume que cuadro1_1 es negro
+                 { nombre: "Cuadro Mediano de bebe para Niña recien nacida Medidas 13x18 Negro", precio: 60, imagen: "img/4.jpg" }, // Asume que cuadro1_2 es blanco
+                { nombre: "Cuadro Mediano de bebe para Niña recien nacida Medidas 13x18 Beige", precio: 70, imagen: "img/8.jpg" } ,
+                { nombre: "Cuadro Pequeño de bebe para Niña recien nacida Medidas 10x15 Blanco", precio: 35, imagen: "img/5.jpg" }, // Asume que cuadro1_1 es negro
+                { nombre: "Cuadro Pequeño de bebe para Niña recien nacida Medidas 10x15 Negro", precio: 35, imagen: "img/6.jpg" }, // Asume que cuadro1_2 es blanco
+               ]
+            },
+
+
+
+            { id: 2, nombreBase: "Cuadro de Novios",
+              variantes: [
+              { nombre: "Cuadro Grande Romántico de Novios Medidas 20x25 Blanco", precio: 100, imagen: "img/11.jpg" }, // Asume que cuadro1_1 es negro
+              { nombre: "Cuadro Grande Romántico de Novios Medidas 20x25 Negro", precio: 100, imagen: "img/22.jpg" }, // Asume que cuadro1_2 es blanco
+             { nombre: "Cuadro Grande Romántico de Novios Medidas 20x25 Beige", precio: 110, imagen: "img/88.jpg" } ,
+             { nombre: "Cuadro Mediano Romántico de Novios Medidas 13x18 Blanco", precio: 60, imagen: "img/33.jpg" }, // Asume que cuadro1_1 es negro
+              { nombre: "Cuadro Mediano Romántico de Novios Medidas 13x18 Negro", precio: 60, imagen: "img/44.jpg" }, // Asume que cuadro1_2 es blanco
+             { nombre: "Cuadro Mediano Romántico de Novios Medidas 13x18 Beige", precio: 70, imagen: "img/88.jpg" } ,
+             { nombre: "Cuadro Pequeño Romántico de Novios Medidas 10x15 Blanco", precio: 35, imagen: "img/55.jpg" }, // Asume que cuadro1_1 es negro
+             { nombre: "Cuadro Pequeño Romántico de Novios Medidas 10x15 Negro", precio: 35, imagen: "img/66.jpg" },
+
+              ]
+            },
+            { id: 3, nombreBase: "Cuadro para Mamá",
+              variantes: [      
+              { nombre: "Cuadro Grande para Detalle de Amor y Agradecimiento para Mamá Medidas 20x25 Blanco", precio: 100, imagen: "img/111.jpg" }, // Asume que cuadro1_1 es negro
+              { nombre: "Cuadro Grande para Detalle de Amor y Agradecimiento para Mamá Medidas 20x25 Negro", precio: 100, imagen: "img/222.jpg" }, // Asume que cuadro1_2 es blanco
+             { nombre: "Cuadro Grande para Detalle de Amor y Agradecimiento para Mamá Medidas 20x25 Beige", precio: 110, imagen: "img/888.jpg" } ,
+             { nombre: "Cuadro Mediano para Detalle de Amor y Agradecimiento para Mamá Medidas 13x18 Blanco", precio: 60, imagen: "img/333.jpg" }, // Asume que cuadro1_1 es negro
+              { nombre: "Cuadro Mediano para Detalle de Amor y Agradecimiento para Mamá Medidas 13x18 Negro", precio: 60, imagen: "img/444.jpg" }, // Asume que cuadro1_2 es blanco
+             { nombre: "Cuadro Mediano para Detalle de Amor y Agradecimiento para Mamá Medidas 13x18 Beige", precio: 70, imagen: "img/888.jpg" } ,
+             { nombre: "Cuadro Pequeño para Detalle de Amor y Agradecimiento para Mamá Medidas 10x15 Blanco", precio: 35, imagen: "img/555.jpg" }, // Asume que cuadro1_1 es negro
+             { nombre: "Cuadro Pequeño para Detalle de Amor y Agradecimiento para Mamá Medidas 10x15 Negro", precio: 35, imagen: "img/666.jpg" },              
+                
+              ]
+            },
+
+            { id: 61, nombreBase: "Cuadro Bebe", // Producto 16 como ejemplo simple
+            variantes: [
+ 
+            { nombre: "Cuadro Grande de Bebe para Niño Medidas 20x25 Blanco", precio: 100, imagen: "img/bebe1.jpg" }, // Asume que cuadro1_1 es negro
+            { nombre: "Cuadro Grande de Bebe para Niño Medidas 20x25 Negro", precio: 100, imagen: "img/bebe2.jpg" }, // Asume que cuadro1_2 es blanco
+           { nombre: "Cuadro Grande de Bebe para Niño Medidas 20x25 Beige", precio: 110, imagen: "img/bebe3.jpg" } ,
+           { nombre: "Cuadro Mediano de Bebe para Niño Medidas 13x18 Blanco", precio: 60, imagen: "img/bebe4.jpg" }, // Asume que cuadro1_1 es negro
+            { nombre: "Cuadro Mediano de Bebe para Niño Medidas 13x18 Negro", precio: 60, imagen: "img/bebe5.jpg" }, // Asume que cuadro1_2 es blanco
+           { nombre: "Cuadro Mediano de Bebe para Niño Medidas 13x18 Beige", precio: 70, imagen: "img/bebe3.jpg" } ,
+           { nombre: "Cuadro Pequeño de Bebe para Niño Medidas 10x15 Blanco", precio: 35, imagen: "img/bebe6.jpg" }, // Asume que cuadro1_1 es negro
+           { nombre: "Cuadro Pequeño de Bebe para Niño Medidas 10x15 Negro", precio: 35, imagen: "img/bebe7.jpg" },    
+ 
+            ]
+          },
+
+          { id: 99, nombreBase: "Cuadro de Pareja corazon", // Producto 16 como ejemplo simple
+          variantes: [
+
+          { nombre: "Cuadro Grande de San Valentín en forma de corazón Medidas 20x25 Blanco", precio: 100, imagen: "img/cora1.jpg" }, // Asume que cuadro1_1 es negro
+          { nombre: "Cuadro Grande de San Valentín en forma de corazón Medidas 20x25 Negro", precio: 100, imagen: "img/cora2.jpg" }, // Asume que cuadro1_2 es blanco
+         { nombre: "Cuadro Grande de San Valentín en forma de corazón Medidas 20x25 Beige", precio: 110, imagen: "img/cora3.jpg" } ,
+         { nombre: "Cuadro Mediano de San Valentín en forma de corazón Medidas 13x18 Blanco", precio: 60, imagen: "img/cora4.jpg" }, 
+         { nombre: "Cuadro Mediano de San Valentín en forma de corazón Medidas 13x18 Negro", precio: 60, imagen: "img/cora5.jpg" }, 
+         { nombre: "Cuadro Mediano de San Valentín en forma de corazón Medidas 13x18 Beige", precio: 70, imagen: "img/cora3.jpg" } ,
+         { nombre: "Cuadro Pequeño de San Valentín en forma de corazón Medidas 10x15 Blanco", precio: 35, imagen: "img/cora6.jpg" }, // Asume que cuadro1_1 es negro
+         { nombre: "Cuadro Pequeño de San Valentín en forma de corazón Medidas 10x15 Negro", precio: 35, imagen: "img/cora7.jpg" },    
+
+          ]
+        },
+
+            { id: 4, nombreBase: "Cuadro para Papá",
+              variantes: [
+              { nombre: "Cuadro Grande con Mensaje de Amor para Papá Medidas 20x25 Blanco", precio: 100, imagen: "img/1111.jpg" }, // Asume que cuadro1_1 es negro
+              { nombre: "Cuadro Grande con Mensaje de Amor para Papá Medidas 20x25 Negro", precio: 100, imagen: "img/2222.jpg" }, // Asume que cuadro1_2 es blanco
+             { nombre: "Cuadro Grande con Mensaje de Amor para Papá Medidas 20x25 Beige", precio: 110, imagen: "img/8888.jpg" } ,
+             { nombre: "Cuadro Mediano con Mensaje de Amor para Papá Medidas 13x18 Blanco", precio: 60, imagen: "img/3333.jpg" }, // Asume que cuadro1_1 es negro
+              { nombre: "Cuadro Mediano con Mensaje de Amor para Papá Medidas 13x18 Negro", precio: 60, imagen: "img/4444.jpg" }, // Asume que cuadro1_2 es blanco
+             { nombre: "Cuadro Mediano con Mensaje de Amor para Papá Medidas 13x18 Beige", precio: 70, imagen: "img/8888.jpg" } ,
+             { nombre: "Cuadro Pequeño con Mensaje de Amor para Papá Medidas 10x15 Blanco", precio: 35, imagen: "img/5555.jpg" }, // Asume que cuadro1_1 es negro
+             { nombre: "Cuadro Pequeño con Mensaje de Amor para Papá Medidas 10x15 Negro", precio: 35, imagen: "img/6666.jpg" },              
+              ]
+            },
+            { id: 5, nombreBase: "Cuadro de Novios",
+              variantes: [
+              { nombre: "Cuadro Grande de Novios estilo Spotify Medidas 20x25 Blanco", precio: 100, imagen: "img/11111.jpg" }, // Asume que cuadro1_1 es negro
+              { nombre: "Cuadro Grande de Novios estilo Spotify Medidas 20x25 Negro", precio: 100, imagen: "img/22222.jpg" }, // Asume que cuadro1_2 es blanco
+             { nombre: "Cuadro Grande de Novios estilo Spotify Medidas 20x25 Beige", precio: 110, imagen: "img/88888.jpg" } ,
+             { nombre: "Cuadro Mediano de Novios estilo Spotify Medidas 13x18 Blanco", precio: 60, imagen: "img/33333.jpg" }, // Asume que cuadro1_1 es negro
+              { nombre: "Cuadro Mediano de Novios estilo Spotify Medidas 13x18 Negro", precio: 60, imagen: "img/44444.jpg" }, // Asume que cuadro1_2 es blanco
+             { nombre: "Cuadro Mediano de Novios estilo Spotify Medidas 13x18 Beige", precio: 70, imagen: "img/88888.jpg" } ,
+             { nombre: "Cuadro Pequeño de Novios estilo Spotify Medidas 10x15 Blanco", precio: 35, imagen: "img/55555.jpg" }, // Asume que cuadro1_1 es negro
+             { nombre: "Cuadro Pequeño de Novios estilo Spotify Medidas 10x15 Negro", precio: 35, imagen: "img/66666.jpg" },              ]
+            },
+
+
+            { id: 200, nombreBase: "Recuerdo Para Mamá", // Producto 16 como ejemplo simple
+            variantes: [
+
+            { nombre: "Cuadro Grande para Detalle del dia de las Madres Medidas 20x25 Blanco", precio: 100, imagen: "img/mom1.jpg" }, // Asume que cuadro1_1 es negro
+            { nombre: "Cuadro Grande para Detalle del dia de las Madres Medidas 20x25 Negro", precio: 100, imagen: "img/mom2.jpg" }, // Asume que cuadro1_2 es blanco
+           { nombre: "Cuadro Grande para Detalle del dia de las Madres Medidas 20x25 Beige", precio: 110, imagen: "img/mom3.jpg" } ,
+           { nombre: "Cuadro Mediano para Detalle del dia de las Madres Medidas 13x18 Blanco", precio: 60, imagen: "img/mom4.jpg" }, // Asume que cuadro1_1 es negro
+            { nombre: "Cuadro Mediano para Detalle del dia de las Madres Medidas 13x18 Negro", precio: 60, imagen: "img/mom5.jpg" }, // Asume que cuadro1_2 es blanco
+           { nombre: "Cuadro Mediano para Detalle del dia de las Madres Medidas 13x18 Beige", precio: 70, imagen: "img/mom3.jpg" } ,
+           { nombre: "Cuadro Pequeño para Detalle del dia de las Madres Medidas 10x15 Blanco", precio: 35, imagen: "img/mom6.jpg" }, // Asume que cuadro1_1 es negro
+           { nombre: "Cuadro Pequeño para Detalle del dia de las Madres Medidas 10x15 Negro", precio: 35, imagen: "img/mom7.jpg" },    
+
+            ]
+          },
+
+            // Ejemplo de adaptación para el producto 6:
+             { id: 6, nombreBase: "Cuadro de bebe niño",
+               variantes: [
+               { nombre: "Cuadro Grande de bebe para Niño pequeño Medidas 20x25 Blanco", precio: 100, imagen: "img/111111.jpg" }, // Asume que cuadro1_1 es negro
+               { nombre: "Cuadro Grande de bebe para Niño pequeño Medidas 20x25 Negro", precio: 100, imagen: "img/222222.jpg" }, // Asume que cuadro1_2 es blanco
+              { nombre: "Cuadro Grande de bebe para Niño pequeño Medidas 20x25 Beige", precio: 110, imagen: "img/888888.jpg" } ,
+              { nombre: "Cuadro Mediano de bebe para Niño pequeño Medidas 13x18 Blanco", precio: 60, imagen: "img/333333.jpg" }, // Asume que cuadro1_1 es negro
+               { nombre: "Cuadro Mediano de bebe para Niño pequeño Medidas 13x18 Negro", precio: 60, imagen: "img/444444.jpg" }, // Asume que cuadro1_2 es blanco
+              { nombre: "Cuadro Mediano de bebe para Niño pequeño Medidas 13x18 Beige", precio: 70, imagen: "img/888888.jpg" } ,
+              { nombre: "Cuadro Pequeño de bebe para Niño pequeño Medidas 10x15 Blanco", precio: 35, imagen: "img/555555.jpg" }, // Asume que cuadro1_1 es negro
+              { nombre: "Cuadro Pequeño de bebe para Niño pequeño Medidas 10x15 Negro", precio: 35, imagen: "img/666666.jpg" },                        
+               ]
+             },
+             // Ejemplo de adaptación para el producto 10 (si el precio varía por tamaño):
+
+
+             { id: 69, nombreBase: "Cuadro de Pareja", // Producto 16 como ejemplo simple
+             variantes: [
+  
+             { nombre: "Cuadro Grande de Novios Medidas 20x25 Blanco", precio: 100, imagen: "img/1x.jpg" }, // Asume que cuadro1_1 es negro
+             { nombre: "Cuadro Grande de Novios Medidas 20x25 Negro", precio: 100, imagen: "img/2x.jpg" }, // Asume que cuadro1_2 es blanco
+            { nombre: "Cuadro Grande de Novios Medidas 20x25 Beige", precio: 110, imagen: "img/3x.jpg" } ,
+            { nombre: "Cuadro Mediano de Novios Medidas 13x18 Blanco", precio: 60, imagen: "img/4x.jpg" }, // Asume que cuadro1_1 es negro
+             { nombre: "Cuadro Mediano de Novios Niño Medidas 13x18 Negro", precio: 60, imagen: "img/5x.jpg" }, // Asume que cuadro1_2 es blanco
+            { nombre: "Cuadro Mediano de Novios Medidas 13x18 Beige", precio: 70, imagen: "img/3x.jpg" } ,
+            { nombre: "Cuadro Pequeño de Novios Medidas 10x15 Blanco", precio: 35, imagen: "img/6x.jpg" }, // Asume que cuadro1_1 es negro
+            { nombre: "Cuadro Pequeño de Novios Medidas 10x15 Negro", precio: 35, imagen: "img/7x.jpg" },    
+  
+             ]
+           },
+
+
+              { id: 10, nombreBase: "Recuerdo de Verano",
+               variantes: [
+                { nombre: "Cuadro Grande Recuerdo de Verano Medidas 20x25 Blanco", precio: 100, imagen: "img/1111111.jpg" }, // Asume que cuadro1_1 es negro
+               { nombre: "Cuadro Grande Recuerdo de Verano Medidas Medidas 20x25 Negro", precio: 100, imagen: "img/2222222.jpg" }, // Asume que cuadro1_2 es blanco
+              { nombre: "Cuadro Grande Recuerdo de Verano Medidas 20x25 Beige", precio: 110, imagen: "img/8888888.jpg" } ,
+              { nombre: "Cuadro Mediano Recuerdo de Verano Medidas 13x18 Blanco", precio: 60, imagen: "img/3333333.jpg" }, // Asume que cuadro1_1 es negro
+               { nombre: "Cuadro Mediano Recuerdo de Verano Medidas 13x18 Negro", precio: 60, imagen: "img/4444444.jpg" }, // Asume que cuadro1_2 es blanco
+              { nombre: "Cuadro Mediano Recuerdo de Verano Medidas 13x18 Beige", precio: 70, imagen: "img/8888888.jpg" } ,
+              { nombre: "Cuadro Pequeño Recuerdo de Verano Medidas 10x15 Blanco", precio: 35, imagen: "img/5555555.jpg" }, // Asume que cuadro1_1 es negro
+              { nombre: "Cuadro Pequeño Recuerdo de Verano Medidas 10x15 Negro", precio: 35, imagen: "img/6666666.jpg" },    
+
+                ]
+             },
+
+             { id: 16, nombreBase: "Recuerdo de Aniversario", // Producto 16 como ejemplo simple
+               variantes: [
+
+               { nombre: "Cuadro Grande para Recuerdo de Aniversario Medidas 20x25 Blanco", precio: 100, imagen: "img/11111111.jpg" }, // Asume que cuadro1_1 es negro
+               { nombre: "Cuadro Grande para Recuerdo de Aniversario Medidas Medidas 20x25 Negro", precio: 100, imagen: "img/22222222.jpg" }, // Asume que cuadro1_2 es blanco
+              { nombre: "Cuadro Grande para Recuerdo de Aniversario Medidas 20x25 Beige", precio: 110, imagen: "img/88888888.jpg" } ,
+              { nombre: "Cuadro Mediano para Recuerdo de Aniversario Medidas 13x18 Blanco", precio: 60, imagen: "img/33333333.jpg" }, // Asume que cuadro1_1 es negro
+               { nombre: "Cuadro Mediano para Recuerdo de Aniversario Medidas 13x18 Negro", precio: 60, imagen: "img/44444444.jpg" }, // Asume que cuadro1_2 es blanco
+              { nombre: "Cuadro Mediano para Recuerdo de Aniversario Medidas 13x18 Beige", precio: 70, imagen: "img/88888888.jpg" } ,
+              { nombre: "Cuadro Pequeño para Recuerdo de Aniversario Medidas 10x15 Blanco", precio: 35, imagen: "img/55555555.jpg" }, // Asume que cuadro1_1 es negro
+              { nombre: "Cuadro Pequeño para Recuerdo de Aniversario Medidas 10x15 Negro", precio: 35, imagen: "img/66666666.jpg" },    
+
+               ]
+             },
+
+             { id: 20, nombreBase: "Recuerdo Para Mamá", // Producto 16 como ejemplo simple
+             variantes: [
+
+             { nombre: "Cuadro Grande para Mamá con Dedicatoria Especial Medidas 20x25 Blanco", precio: 100, imagen: "img/mama1.jpg" }, // Asume que cuadro1_1 es negro
+             { nombre: "Cuadro Grande para Mamá con Dedicatoria Especial Medidas 20x25 Negro", precio: 100, imagen: "img/mama2.jpg" }, // Asume que cuadro1_2 es blanco
+            { nombre: "Cuadro Grande para Mamá con Dedicatoria Especial Medidas 20x25 Beige", precio: 110, imagen: "img/mama3.jpg" } ,
+            { nombre: "Cuadro Mediano para Mamá con Dedicatoria Especial Medidas 13x18 Blanco", precio: 60, imagen: "img/mama4.jpg" }, // Asume que cuadro1_1 es negro
+             { nombre: "Cuadro Mediano para Mamá con Dedicatoria Especial Medidas 13x18 Negro", precio: 60, imagen: "img/mama5.jpg" }, // Asume que cuadro1_2 es blanco
+            { nombre: "Cuadro Mediano para Mamá con Dedicatoria Especial Medidas 13x18 Beige", precio: 70, imagen: "img/mama3.jpg" } ,
+            { nombre: "Cuadro Pequeño para Mamá con Dedicatoria Especial Medidas 10x15 Blanco", precio: 35, imagen: "img/mama6.jpg" }, // Asume que cuadro1_1 es negro
+            { nombre: "Cuadro Pequeño para Mamá con Dedicatoria Especial Medidas 10x15 Negro", precio: 35, imagen: "img/mama7.jpg" },    
+
+             ]
+           },
+
+           { id: 89, nombreBase: "Cuadro de Pareja corazon", // Producto 16 como ejemplo simple
+           variantes: [
+
+           { nombre: "Cuadro Grande de Novios diseño de corazón Medidas 20x25 Blanco", precio: 100, imagen: "img/ani1.jpg" }, // Asume que cuadro1_1 es negro
+           { nombre: "Cuadro Grande de Novios diseño de corazón Medidas 20x25 Negro", precio: 100, imagen: "img/ani2.jpg" }, // Asume que cuadro1_2 es blanco
+          { nombre: "Cuadro Grande de Novios diseño de corazón Medidas 20x25 Beige", precio: 110, imagen: "img/ani3.jpg" } ,
+          { nombre: "Cuadro Mediano de Novios diseño de corazón Medidas 13x18 Blanco", precio: 60, imagen: "img/ani4.jpg" }, // Asume que cuadro1_1 es negro
+          { nombre: "Cuadro Mediano de Novios diseño de corazón Medidas 13x18 Beige", precio: 70, imagen: "img/ani3.jpg" } ,
+          { nombre: "Cuadro Pequeño de Novios diseño de corazón Medidas 10x15 Blanco", precio: 35, imagen: "img/ani5.jpg" }, // Asume que cuadro1_1 es negro
+          { nombre: "Cuadro Pequeño de Novios diseño de corazón Medidas 10x15 Negro", precio: 35, imagen: "img/ani6.jpg" },    
+
+           ]
+         },
+
+
+           { id: 60, nombreBase: "Cuadro Bebe", // Producto 16 como ejemplo simple
+           variantes: [
+
+           { nombre: "Cuadro Grande para Recuerdos de Bebe pequeño Medidas 20x25 Blanco", precio: 100, imagen: "img/bebex1.jpg" }, // Asume que cuadro1_1 es negro
+           { nombre: "Cuadro Grande para Recuerdos de Bebe pequeño Medidas 20x25 Negro", precio: 100, imagen: "img/bebex2.jpg" }, // Asume que cuadro1_2 es blanco
+          { nombre: "Cuadro Grande para Recuerdos de Bebe pequeño Medidas 20x25 Beige", precio: 110, imagen: "img/bebex3.jpg" } ,
+          { nombre: "Cuadro Mediano para Recuerdos de Bebe pequeño Medidas 13x18 Blanco", precio: 60, imagen: "img/bebex4.jpg" }, // Asume que cuadro1_1 es negro
+           { nombre: "Cuadro Mediano para Recuerdos de Bebe pequeño Medidas 13x18 Negro", precio: 60, imagen: "img/bebex5.jpg" }, // Asume que cuadro1_2 es blanco
+          { nombre: "Cuadro Mediano para Recuerdos de Bebe pequeño Medidas 13x18 Beige", precio: 70, imagen: "img/bebex3.jpg" } ,
+          { nombre: "Cuadro Pequeño para Recuerdos de Bebe pequeño Medidas 10x15 Blanco", precio: 35, imagen: "img/bebex6.jpg" }, // Asume que cuadro1_1 es negro
+          { nombre: "Cuadro Pequeño para Recuerdos de Bebe pequeño Medidas 10x15 Negro", precio: 35, imagen: "img/bebex8.jpg" },    
+
+           ]
+         },
+
+
+
+         { id: 50, nombreBase: "Cuadro para bebe Niña", // Producto 16 como ejemplo simple
+               variantes: [
+
+               { nombre: "Cuadro Grande de bebe para Niña pequeña Medidas 20x25 Blanco", precio: 100, imagen: "img/111111111111.jpg" }, // Asume que cuadro1_1 es negro
+               { nombre: "Cuadro Grande de bebe para Niña pequeña Medidas 20x25 Negro", precio: 100, imagen: "img/222222222222.jpg" }, // Asume que cuadro1_2 es blanco
+              { nombre: "Cuadro Grande de bebe para Niña pequeña Medidas 20x25 Beige", precio: 110, imagen: "img/888888888888.jpg" } ,
+              { nombre: "Cuadro Mediano de bebe para Niña pequeña Medidas 13x18 Blanco", precio: 60, imagen: "img/333333333333.jpg" }, // Asume que cuadro1_1 es negro
+               { nombre: "Cuadro Mediano de bebe para Niña pequeña Medidas 13x18 Negro", precio: 60, imagen: "img/444444444444.jpg" }, // Asume que cuadro1_2 es blanco
+              { nombre: "Cuadro Mediano de bebe para Niña pequeña Medidas 13x18 Beige", precio: 70, imagen: "img/888888888888.jpg" } ,
+              { nombre: "Cuadro Pequeño de bebe para Niña pequeña Medidas 10x15 Blanco", precio: 35, imagen: "img/555555555555.jpg" }, // Asume que cuadro1_1 es negro
+              { nombre: "Cuadro Pequeño de bebe para Niña pequeña Medidas 10x15 Negro", precio: 35, imagen: "img/666666666666.jpg" },    
+
+               ]
+               },
+
+               { id: 21, nombreBase: "Recuerdo Para Pareja", // Producto 16 como ejemplo simple
+             variantes: [
+
+             { nombre: "Cuadro Grande para Recuerdo de Aniversario Medidas 20x25 Blanco", precio: 100, imagen: "img/pareja1.jpg" }, // Asume que cuadro1_1 es negro
+             { nombre: "Cuadro Grande para Recuerdo de Aniversario Medidas 20x25 Negro", precio: 100, imagen: "img/pareja2.jpg" }, // Asume que cuadro1_2 es blanco
+            { nombre: "Cuadro Grande para Recuerdo de Aniversario Medidas 20x25 Beige", precio: 110, imagen: "img/pareja3.jpg" } ,
+            { nombre: "Cuadro Mediano para Recuerdo de Aniversario Medidas 13x18 Blanco", precio: 60, imagen: "img/pareja4.jpg" }, // Asume que cuadro1_1 es negro
+             { nombre: "Cuadro Mediano para Recuerdo de Aniversario Medidas 13x18 Negro", precio: 60, imagen: "img/pareja5.jpg" }, // Asume que cuadro1_2 es blanco
+            { nombre: "Cuadro Mediano para Recuerdo de Aniversario Medidas 13x18 Beige", precio: 70, imagen: "img/pareja3.jpg" } ,
+            { nombre: "Cuadro Pequeño para Recuerdo de Aniversario Medidas 10x15 Blanco", precio: 35, imagen: "img/pareja6.jpg" }, // Asume que cuadro1_1 es negro
+            { nombre: "Cuadro Pequeño para Recuerdo de Aniversario Medidas 10x15 Negro", precio: 35, imagen: "img/pareja7.jpg" },    
+
+             ]
+           },
+
+           { id: 29, nombreBase: "Recuerdo feliz cumple", // Producto 16 como ejemplo simple
+             variantes: [
+
+             { nombre: "Cuadro Grande para regalo de Cumpleaños Medidas 20x25 Blanco", precio: 100, imagen: "img/happy1.jpg" }, // Asume que cuadro1_1 es negro
+             { nombre: "Cuadro Grande para regalo de Cumpleaños Medidas 20x25 Negro", precio: 100, imagen: "img/happy2.jpg" }, // Asume que cuadro1_2 es blanco
+            { nombre: "Cuadro Grande para regalo de Cumpleaños Medidas 20x25 Beige", precio: 110, imagen: "img/happy3.jpg" } ,
+            { nombre: "Cuadro Mediano para regalo de Cumpleaños Medidas 13x18 Blanco", precio: 60, imagen: "img/happy4.jpg" }, // Asume que cuadro1_1 es negro
+             { nombre: "Cuadro Mediano para regalo de Cumpleaños Medidas 13x18 Negro", precio: 60, imagen: "img/happy5.jpg" }, // Asume que cuadro1_2 es blanco
+            { nombre: "Cuadro Mediano para regalo de Cumpleaños Medidas 13x18 Beige", precio: 70, imagen: "img/happy3.jpg" } ,
+            { nombre: "Cuadro Pequeño para regalo de Cumpleaños Medidas 10x15 Blanco", precio: 35, imagen: "img/happy6.jpg" }, // Asume que cuadro1_1 es negro
+            { nombre: "Cuadro Pequeño para regalo de Cumpleaños Medidas 10x15 Negro", precio: 35, imagen: "img/happy7.jpg" },    
+
+             ]
+           },
+
+
+             { id: 25, nombreBase: "Cuadro para Papá",
+                variantes: [
+                 
+                { nombre: "Cuadro Grande para Papá con Dedicatoria Especial Medidas 20x25 Blanco", precio: 100, imagen: "img/papa1.jpg" }, // Asume que cuadro1_1 es negro
+                { nombre: "Cuadro Grande para Papá con Dedicatoria Especial Medidas 20x25 Negro", precio: 100, imagen: "img/papa2.jpg" }, // Asume que cuadro1_2 es blanco
+               { nombre: "Cuadro Grande para Papá con Dedicatoria Especial Medidas 20x25 Beige", precio: 110, imagen: "img/papa3.jpg" } ,
+               { nombre: "Cuadro Mediano para Papá con Dedicatoria Especial Medidas 13x18 Blanco", precio: 60, imagen: "img/papa4.jpg" }, // Asume que cuadro1_1 es negro
+                { nombre: "Cuadro Mediano para Papá con Dedicatoria Especial Medidas 13x18 Negro", precio: 60, imagen: "img/papa5.jpg" }, // Asume que cuadro1_2 es blanco
+               { nombre: "Cuadro Mediano para Papá con Dedicatoria Especial Medidas 13x18 Beige", precio: 70, imagen: "img/papa3.jpg" } ,
+               { nombre: "Cuadro Pequeño para Papá con Dedicatoria Especial Medidas 10x15 Blanco", precio: 35, imagen: "img/papa6.jpg" }, // Asume que cuadro1_1 es negro
+               { nombre: "Cuadro Pequeño para Papá con Dedicatoria Especial Medidas 10x15 Negro", precio: 35, imagen: "img/papa7.jpg" },    
+   
+
+
+                ]
+              },
+
+              { id: 245, nombreBase: "Cuadro sencillo",
+              variantes: [
+               
+              { nombre: "Cuadro Grande con fotografia Medidas 20x25 Blanco", precio: 95, imagen: "img/sensi1.jpg" }, // Asume que cuadro1_1 es negro
+              { nombre: "Cuadro Grande con fotografia Medidas 20x25 Negro", precio: 95, imagen: "img/sensi2.jpg" }, // Asume que cuadro1_2 es blanco
+             { nombre: "Cuadro Grande con fotografia Medidas 20x25 Beige", precio: 105, imagen: "img/sensi3.jpg" } ,
+             { nombre: "Cuadro Mediano con fotografia Medidas 13x18 Blanco", precio: 55, imagen: "img/sensi4.jpg" }, // Asume que cuadro1_1 es negro
+              { nombre: "Cuadro Mediano con fotografia Medidas 13x18 Negro", precio: 55, imagen: "img/sensi5.jpg" }, // Asume que cuadro1_2 es blanco
+             { nombre: "Cuadro Mediano con fotografia Medidas 13x18 Beige", precio: 65, imagen: "img/sensi3.jpg" } ,
+             { nombre: "Cuadro Pequeño con fotografia Medidas 10x15 Blanco", precio: 30, imagen: "img/sensi6.jpg" }, // Asume que cuadro1_1 es negro
+             { nombre: "Cuadro Pequeño con fotografia Medidas 10x15 Negro", precio: 30, imagen: "img/sensi7.jpg" },    
+ 
+
+
+              ]
+            }              
+        ];
+        let carrito = []; // Almacena { productoId, variantIndex, variante: {...}, cantidad: N, cartItemId }
+        const productosDiv = document.getElementById("productos");
+        const carritoLateral = document.getElementById("carrito-lateral");
+        const listaCarrito = document.getElementById("lista-carrito");
+        const totalSpan = document.getElementById("total");
+        const abrirCarritoBtn = document.getElementById("abrir-carrito-btn");
+        const cerrarCarritoBtn = document.getElementById("cerrar-carrito-btn");
+        const notificacionDiv = document.getElementById("notificacion-carrito");
+
+        // --- ¡¡¡ IMPORTANTE !!! REEMPLAZA ESTE NÚMERO CON TU NÚMERO REAL ---
+        const NUMERO_WHATSAPP = "50254735998"; // Incluye código de país SIN el +
+        // -----------------------------------------------------------------
+
+        // --- Renderizar Productos (MODIFICADO para Carrusel dinámico y sin Selector) ---
+        function renderizarProductos() {
+            productosDiv.innerHTML = '';
+            productos.forEach((producto) => {
+                // Asegurarse que variantes exista y sea un array con al menos un elemento
+                if (!producto.variantes || !Array.isArray(producto.variantes) || producto.variantes.length === 0) {
+                    console.warn(`Producto con ID ${producto.id} no tiene variantes válidas. Saltando.`);
+                    return; // Saltar este producto si no tiene variantes
+                }
+
+                const div = document.createElement("div");
+                div.className = "producto";
+                div.dataset.productId = producto.id; // Añadir ID para referencia
+
+                 // Tomar datos de la primera variante para mostrar inicialmente
+                const primeraVariante = producto.variantes[0];
+
+                // --- Generar HTML del Carrusel ---
+                let carouselHTML = `<div class="carousel-container" data-product-id="${producto.id}">`; // Añadir ID aquí también
+                 producto.variantes.forEach((variante, index) => {
+                     // Usa un placeholder si la imagen no está definida
+                     const imgSrc = variante.imagen || 'img/placeholder.png';
+                     carouselHTML += `<img src="${imgSrc}" alt="${variante.nombre}" class="carousel-image ${index === 0 ? 'active' : ''}" data-variant-index="${index}">`;
+                 });
+
+                // Añadir botones solo si hay más de una variante
+                 if (producto.variantes.length > 1) {
+                     carouselHTML += `
+                         <button class="carousel-btn prev" aria-label="Anterior variante">&lsaquo;</button>
+                         <button class="carousel-btn next" aria-label="Siguiente variante">&rsaquo;</button>
+                     `;
+                 }
+                 carouselHTML += `</div>`;
+
+                 // --- Generar HTML del Producto (Sin Selector) ---
+                div.innerHTML = `
+                    ${carouselHTML}
+                    <div>
+                         <h3 id="nombre-producto-${producto.id}">${primeraVariante.nombre}</h3>
+                         <p id="precio-producto-${producto.id}">Precio: Q${primeraVariante.precio.toFixed(2)}</p>
+                     </div>
+                     <div class="botones-producto">
+                         <button class="btn-agregar-carrito" onclick='agregarAlCarrito(${producto.id})'>Agregar al carrito</button>
+                        <button class="btn-whatsapp-directo" onclick='pedirPorWhatsappDirecto(${producto.id})'>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.1-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/></svg>
+                            Pedir por WhatsApp
+                         </button>
+                    </div>
+                `;
+                productosDiv.appendChild(div);
+            });
+
+            // --- Añadir Event Listeners para Carruseles (Usando Delegación en el contenedor principal) ---
+             productosDiv.addEventListener('click', function(event) {
+                 const target = event.target;
+                 // Verifica si se hizo clic en un botón de carrusel
+                 if (target.classList.contains('carousel-btn')) {
+                     const direction = target.classList.contains('next') ? 1 : -1;
+                     // Encuentra el contenedor del carrusel más cercano
+                     const carouselContainer = target.closest('.carousel-container');
+                     if (carouselContainer) {
+                         cambiarImagenCarousel(carouselContainer, direction);
+                     }
+                 }
+             });
+        }
+
+        // --- Función para Cambiar Imagen y Datos del Carrusel ---
+        function cambiarImagenCarousel(carouselContainer, direction) {
+            const images = carouselContainer.querySelectorAll('.carousel-image');
+            const activeImage = carouselContainer.querySelector('.carousel-image.active');
+            if (!activeImage || images.length <= 1) return; // No hacer nada si no hay imagen activa o solo hay una
+
+            const productId = carouselContainer.dataset.productId;
+            const producto = productos.find(p => p.id == productId); // Usar == por si acaso el dataset es string
+
+             if (!producto || !producto.variantes) return; // Salir si no se encuentra el producto o variantes
+
+            let currentIndex = parseInt(activeImage.dataset.variantIndex);
+            let nextIndex = (currentIndex + direction + images.length) % images.length; // Calcula el siguiente índice circularmente
+
+             const nuevaVariante = producto.variantes[nextIndex];
+             if (!nuevaVariante) return; // Salir si la nueva variante no existe
+
+            // Ocultar imagen actual y mostrar la siguiente
+            activeImage.classList.remove('active');
+            images[nextIndex].classList.add('active');
+
+            // Actualizar nombre y precio en la tarjeta del producto
+            const nombreElement = document.getElementById(`nombre-producto-${productId}`);
+            const precioElement = document.getElementById(`precio-producto-${productId}`);
+
+            if (nombreElement && precioElement) {
+                nombreElement.textContent = nuevaVariante.nombre;
+                precioElement.textContent = `Precio: Q${nuevaVariante.precio.toFixed(2)}`;
+            }
+        }
+
+
+        // --- Función para Mostrar Notificación (Sin cambios) ---
+        let notificacionTimeout;
+        function mostrarNotificacion(mensaje) {
+            clearTimeout(notificacionTimeout);
+            notificacionDiv.textContent = mensaje;
+            notificacionDiv.classList.add('visible');
+            notificacionTimeout = setTimeout(() => {
+                notificacionDiv.classList.remove('visible');
+            }, 3000); // Ocultar después de 3 segundos
+        }
+
+        // --- Agregar al Carrito (MODIFICADO) ---
+        function agregarAlCarrito(productoId) {
+            // 1. Encontrar el producto base
+             const productoBase = productos.find(p => p.id === productoId);
+             if (!productoBase) return; // No encontrado
+
+            // 2. Encontrar la tarjeta del producto en el DOM
+            const productoCard = document.querySelector(`.producto[data-product-id='${productoId}']`);
+            if (!productoCard) return;
+
+            // 3. Encontrar la imagen activa para saber la variante
+             const activeImage = productoCard.querySelector('.carousel-image.active');
+             if (!activeImage) return; // No se encontró imagen activa
+
+             const variantIndex = parseInt(activeImage.dataset.variantIndex);
+             // Verifica que el índice sea válido
+             if (isNaN(variantIndex) || variantIndex < 0 || variantIndex >= productoBase.variantes.length) {
+                 console.error(`Índice de variante inválido (${variantIndex}) para producto ID ${productoId}`);
+                 return;
+             }
+             const varianteSeleccionada = productoBase.variantes[variantIndex];
+
+             if (!varianteSeleccionada) {
+                 console.error(`Variante seleccionada no encontrada para producto ID ${productoId}, índice ${variantIndex}`);
+                 return; // Variante no válida
+             }
+
+
+            // 4. Buscar si esta variante específica ya está en el carrito
+            // Usamos productoId y variantIndex como identificador único de la variante
+            const itemExistenteIndex = carrito.findIndex(item =>
+                 item.productoId === productoId && item.variantIndex === variantIndex
+             );
+
+            if (itemExistenteIndex > -1) {
+                // Si existe, incrementar cantidad
+                 carrito[itemExistenteIndex].cantidad++;
+            } else {
+                // Si no existe, añadirlo
+                 carrito.push({
+                    productoId: productoId,
+                    variantIndex: variantIndex,
+                    variante: varianteSeleccionada, // Guardamos toda la info de la variante
+                    cantidad: 1,
+                    // Añadimos un ID único para facilitar la eliminación después
+                    cartItemId: `cart-${productoId}-${variantIndex}-${Date.now()}`
+                });
+            }
+
+            actualizarCarritoUI(); // Renombrada para claridad
+            abrirCarrito();
+            mostrarNotificacion(`${varianteSeleccionada.nombre} añadido al carrito!`);
+        }
+
+        // --- Eliminar del Carrito (MODIFICADO para usar cartItemId) ---
+        function eliminarDelCarrito(cartItemIdAEliminar) {
+             carrito = carrito.filter(item => item.cartItemId !== cartItemIdAEliminar);
+             actualizarCarritoUI();
+         }
+
+        // --- Actualizar Interfaz del Carrito (Renombrada y MODIFICADA) ---
+        function actualizarCarritoUI() {
+            listaCarrito.innerHTML = ""; // Limpiar lista
+            let totalGeneral = 0;
+            if (carrito.length === 0) {
+                const liVacio = document.createElement("li");
+                liVacio.textContent = "Tu carrito está vacío";
+                liVacio.className = 'empty-cart';
+                listaCarrito.appendChild(liVacio);
+                abrirCarritoBtn.classList.remove('activo'); // Quitar indicador verde
+            } else {
+                carrito.forEach((item) => {
+                    const li = document.createElement("li");
+                    const variante = item.variante; // Usamos la info guardada
+                     const cantidad = item.cantidad;
+                    // Asegurarse que el precio es un número
+                    const precioUnitario = Number(variante.precio) || 0;
+                    const subtotal = precioUnitario * cantidad;
+                    totalGeneral += subtotal;
+
+                    // Usar la imagen de la variante, con fallback
+                    const imagenCarrito = variante.imagen || 'img/placeholder.png';
+
+                    li.innerHTML = `
+                        <img src="${imagenCarrito}" alt="${variante.nombre}">
+                        <div class="item-detalles">
+                             <span class="item-nombre">${variante.nombre}</span>
+                             <span class="item-info">Q${precioUnitario.toFixed(2)} x ${cantidad} = Q${subtotal.toFixed(2)}</span>
+                         </div>
+                         <button class="btn-eliminar-item" onclick="eliminarDelCarrito('${item.cartItemId}')" aria-label="Eliminar ${variante.nombre}">&times;</button>
+                     `;
+                     listaCarrito.appendChild(li);
+                });
+                abrirCarritoBtn.classList.add('activo'); // Poner indicador verde
+            }
+            totalSpan.textContent = totalGeneral.toFixed(2); // Actualizar total
+        }
+
+        function abrirCarrito() { carritoLateral.classList.add("visible"); }
+        function cerrarCarrito() { carritoLateral.classList.remove("visible"); }
+
+        // --- Pedir por WhatsApp Directo (MODIFICADO) ---
+        function pedirPorWhatsappDirecto(productoId) {
+             // 1. Encontrar el producto base
+             const productoBase = productos.find(p => p.id === productoId);
+             if (!productoBase) return;
+
+            // 2. Encontrar la tarjeta del producto
+             const productoCard = document.querySelector(`.producto[data-product-id='${productoId}']`);
+             if (!productoCard) return;
+
+            // 3. Encontrar la variante activa
+             const activeImage = productoCard.querySelector('.carousel-image.active');
+             if (!activeImage) return;
+             const variantIndex = parseInt(activeImage.dataset.variantIndex);
+
+             // Verifica que el índice sea válido
+             if (isNaN(variantIndex) || variantIndex < 0 || variantIndex >= productoBase.variantes.length) return;
+             const varianteSeleccionada = productoBase.variantes[variantIndex];
+             if (!varianteSeleccionada) return;
+
+             // Asegurarse que el precio es un número
+             const precio = Number(varianteSeleccionada.precio) || 0;
+
+            // 4. Construir mensaje y abrir WhatsApp
+             let mensaje = `Hola, me interesa este producto: ${varianteSeleccionada.nombre}`;
+             mensaje += ` de Q${precio.toFixed(2)}. ¿Podrían darme más información y tomar mi pedido?`;
+
+            const urlWhatsapp = `https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
+            window.open(urlWhatsapp, "_blank"); // Abrir en nueva pestaña/app
+        }
+
+        // --- Comprar Carrito por WhatsApp (MODIFICADO) ---
+        function comprarCarritoWhatsapp() {
+            if (carrito.length === 0) {
+                alert("Tu carrito está vacío. ¡Añade algunos fotorecuerdos!");
+                return;
+            }
+
+            let mensaje = "Hola, quiero comprar los siguientes productos:\n";
+            let totalGeneral = 0;
+
+            carrito.forEach(item => {
+                const variante = item.variante;
+                const cantidad = item.cantidad;
+                 // Asegurarse que el precio es un número
+                const precioUnitario = Number(variante.precio) || 0;
+                const subtotal = precioUnitario * cantidad;
+                mensaje += `- ${cantidad} x ${variante.nombre}`; // Usar nombre de la variante
+                mensaje += ` - Q${precioUnitario.toFixed(2)} c/u = Q${subtotal.toFixed(2)}\n`;
+                totalGeneral += subtotal;
+            });
+            mensaje += `\n*Total del pedido: Q${totalGeneral.toFixed(2)}*`;
+            mensaje += "\n\nPor favor, indicarme los siguientes pasos.";
+
+            const urlWhatsapp = `https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
+            window.open(urlWhatsapp, "_blank");
+        }
+
+        // --- Event Listeners (Sin cambios funcionales mayores) ---
+        abrirCarritoBtn.addEventListener("click", (event) => {
+            event.stopPropagation(); // Evita que el click se propague al document
+            abrirCarrito();
+        });
+        cerrarCarritoBtn.addEventListener("click", cerrarCarrito);
+
+        // Cerrar carrito si se hace click fuera de él
+        document.addEventListener('click', function(event) {
+            const isCarritoVisible = carritoLateral.classList.contains('visible');
+            // Comprueba si el click NO fue dentro del carrito Y NO fue en el botón de abrir
+            const isClickInsideCarrito = carritoLateral.contains(event.target);
+            const isClickOnOpenBtn = abrirCarritoBtn.contains(event.target);
+
+             if (isCarritoVisible && !isClickInsideCarrito && !isClickOnOpenBtn) {
+                 cerrarCarrito();
+             }
+         });
+        // Evitar que clicks dentro del carrito lo cierren (necesario por el listener anterior)
+        carritoLateral.addEventListener('click', function(event) {
+            event.stopPropagation();
+        });
+
+        // --- Inicialización ---
+        renderizarProductos(); // Renderiza los productos al cargar
+        actualizarCarritoUI(); // Asegura que el carrito (vacío inicialmente) se muestre correctamente
+    </script>
+
+</body>
+</html>
